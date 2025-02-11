@@ -10,9 +10,10 @@
  */ 
 
 package programmingtheiot.gda.app;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import programmingtheiot.gda.system.SystemPerformanceManager;
+
 
 /**
  * Main GDA application.
@@ -21,17 +22,13 @@ import java.util.logging.Logger;
 public class GatewayDeviceApp
 {
 	// static
-	
-	private static final Logger _Logger =
-		Logger.getLogger(GatewayDeviceApp.class.getName());
-	
-	public static final long DEFAULT_TEST_RUNTIME = 60000L;
+	private static final Logger _Logger =Logger.getLogger(GatewayDeviceApp.class.getName());
+	public static final long DEFAULT_TEST_RUNTIME = 65000L;
 	
 	// private var's
-	
+	private SystemPerformanceManager sysPerfManager = null;
 	
 	// constructors
-	
 	/**
 	 * Constructor.
 	 * 
@@ -40,15 +37,13 @@ public class GatewayDeviceApp
 	public GatewayDeviceApp(String[] args)
 	{
 		super();
-		
 		_Logger.info("Initializing GDA...");
-		
 		parseArgs(args);
+
+		this.sysPerfManager = new SystemPerformanceManager();
 	}
-	
-	
+
 	// static
-	
 	/**
 	 * Main application entry point.
 	 * 
@@ -69,9 +64,8 @@ public class GatewayDeviceApp
 		gwApp.stopApp(0);
 	}
 	
-	
+
 	// public methods
-	
 	/**
 	 * Initializes and starts the application.
 	 * 
@@ -81,15 +75,17 @@ public class GatewayDeviceApp
 		_Logger.info("Starting GDA...");
 		
 		try {
-			// TODO: Your code here
-			
-			_Logger.info("GDA started successfully.");
-		} catch (Exception e) {
-			_Logger.log(Level.SEVERE, "Failed to start GDA. Exiting.", e);
-			
-			stopApp(-1);
-		}
-	}
+            if (this.sysPerfManager.startManager()) {
+                _Logger.info("GDA started successfully.");
+            } else {
+                _Logger.warning("Failed to start system performance manager!");
+                stopApp(-1);
+            }
+        } catch (Exception e) {
+            _Logger.log(Level.SEVERE, "Failed to start GDA. Exiting.", e);
+            stopApp(-1);
+        }
+    }
 	
 	/**
 	 * Stops the application.
@@ -101,15 +97,18 @@ public class GatewayDeviceApp
 		_Logger.info("Stopping GDA...");
 		
 		try {
-			// TODO: Your code here
-			
-			_Logger.log(Level.INFO, "GDA stopped successfully with exit code {0}.", code);
-		} catch (Exception e) {
-			_Logger.log(Level.SEVERE, "Failed to cleanly stop GDA. Exiting.", e);
-		}
-		
-		System.exit(code);
-	}
+            if (this.sysPerfManager.stopManager()) {
+                _Logger.log(Level.INFO, "GDA stopped successfully with exit code {0}.", code);
+            } else {
+                _Logger.warning("Failed to stop system performance manager!");
+            }
+        } catch (Exception e) {
+            _Logger.log(Level.SEVERE, "Failed to cleanly stop GDA. Exiting.", e);
+        }
+
+
+        System.exit(code);
+}
 	
 	
 	// private methods
