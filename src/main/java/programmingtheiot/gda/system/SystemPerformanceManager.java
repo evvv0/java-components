@@ -32,8 +32,12 @@ public class SystemPerformanceManager
     private ScheduledExecutorService schedExecSvc = null;
     private SystemCpuUtilTask sysCpuUtilTask = null;
     private SystemMemUtilTask sysMemUtilTask = null;
+    private SystemDiskUtilTask sysDiskUtilTask = null;
     private Runnable taskRunner = null;
     private boolean isStarted = false;
+
+    private String locationID = ConfigConst.NOT_SET;
+    private IDataMessageListener dataMsgListener = null;
 	
 	// constructors
 	 private int pollRate = ConfigConst.DEFAULT_POLL_CYCLES;
@@ -58,6 +62,11 @@ public class SystemPerformanceManager
         this.schedExecSvc   = Executors.newScheduledThreadPool(1);
 	    this.sysCpuUtilTask = new SystemCpuUtilTask();
 	    this.sysMemUtilTask = new SystemMemUtilTask();
+        this.sysDiskUtilTask = new SystemDiskUtilTask("/");
+
+        this.locationID = ConfigUtil.getInstance().getProperty(
+            ConfigConst.GATEWAY_DEVICE, ConfigConst.LOCATION_ID_PROP, ConfigConst.NOT_SET
+        );
 
 	    this.taskRunner = () -> {
 		this.handleTelemetry();
@@ -72,12 +81,29 @@ public class SystemPerformanceManager
     {
         float cpuUtil = this.sysCpuUtilTask.getTelemetryValue();
         float memUtil = this.sysMemUtilTask.getTelemetryValue();
+        float diskUtil = this.sysDiskUtilTask.getTelemetryValue();
 
-        _Logger.fine("CPU utilization: " + cpuUtil + ", Mem utilization: " + memUtil);
+        _Logger.fine("CPU utilization: " + cpuUtil + ", Mem utilization: " + memUtil + ", Disk utilization: " + diskUtil);
+
+        SystemPerformanceData spd = new SystemPerformanceData();
+        spd.setLocationID(this.locationID);
+        spd.setCpuUtilization(cpuUtil);
+        spd.setMemoryUtilization(memUtil);
+        spd.setDiskUtilization(diskUtil);
+
+        if (this.dataMsgListener != null) {
+            this.dataMsgListener.handleSystemPerformanceMessage(
+                ResourceNameEnum.GDA_SYSTEM_PERF_MSG_RESOURCE, spd
+            );
+    }
+
     }
 	
 	public void setDataMessageListener(IDataMessageListener listener)
 	{
+	    if (listener != null) {
+            this.dataMsgListener = listener;
+    }
 	}
 	
     public boolean startManager()

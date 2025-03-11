@@ -21,6 +21,9 @@ import programmingtheiot.data.ActuatorData;
 import programmingtheiot.data.DataUtil;
 import programmingtheiot.data.SensorData;
 import programmingtheiot.data.SystemPerformanceData;
+import programmingtheiot.data.SystemStateData;
+import programmingtheiot.gda.system.SystemPerformanceManager;
+
 
 import programmingtheiot.gda.connection.CloudClientConnector;
 import programmingtheiot.gda.connection.CoapServerGateway;
@@ -49,6 +52,7 @@ public class DeviceDataManager implements IDataMessageListener
 	private boolean enableCloudClient = false;
 	private boolean enableSmtpClient = false;
 	private boolean enablePersistenceClient = false;
+	private boolean enableSystemPerf = false;
 	
 	private IActuatorDataListener actuatorDataListener = null;
 	private IPubSubClient mqttClient = null;
@@ -56,6 +60,7 @@ public class DeviceDataManager implements IDataMessageListener
 	private IPersistenceClient persistenceClient = null;
 	private IRequestResponseClient smtpClient = null;
 	private CoapServerGateway coapServer = null;
+	private SystemPerformanceManager sysPerfMgr = null;
 	
 	// constructors
 	
@@ -63,65 +68,185 @@ public class DeviceDataManager implements IDataMessageListener
 	{
 		super();
 		
-		initConnections();
-	}
-	
-	public DeviceDataManager(
-		boolean enableMqttClient,
-		boolean enableCoapClient,
-		boolean enableCloudClient,
-		boolean enableSmtpClient,
-		boolean enablePersistenceClient)
-	{
-		super();
-		
-		initConnections();
-	}
-	
-	
-	// public methods
-	
-	@Override
-	public boolean handleActuatorCommandResponse(ResourceNameEnum resourceName, ActuatorData data)
-	{
-		return false;
-	}
+		ConfigUtil configUtil = ConfigUtil.getInstance();
 
-	@Override
-	public boolean handleActuatorCommandRequest(ResourceNameEnum resourceName, ActuatorData data)
-	{
-		return false;
-	}
+	    this.enableMqttClient = configUtil.getBoolean(
+			ConfigConst.GATEWAY_DEVICE, ConfigConst.ENABLE_MQTT_CLIENT_KEY);
 
-	@Override
-	public boolean handleIncomingMessage(ResourceNameEnum resourceName, String msg)
-	{
-		return false;
-	}
+	    this.enableCoapServer = configUtil.getBoolean(
+			ConfigConst.GATEWAY_DEVICE, ConfigConst.ENABLE_COAP_SERVER_KEY);
 
-	@Override
-	public boolean handleSensorMessage(ResourceNameEnum resourceName, SensorData data)
-	{
-		return false;
-	}
+	    this.enableCloudClient = configUtil.getBoolean(
+			ConfigConst.GATEWAY_DEVICE, ConfigConst.ENABLE_CLOUD_CLIENT_KEY);
 
-	@Override
-	public boolean handleSystemPerformanceMessage(ResourceNameEnum resourceName, SystemPerformanceData data)
-	{
-		return false;
-	}
+	    this.enablePersistenceClient = configUtil.getBoolean(
+			ConfigConst.GATEWAY_DEVICE, ConfigConst.ENABLE_PERSISTENCE_CLIENT_KEY);
+
+	    initManager();
+}
+
+    private void initManager()
+    {
+        ConfigUtil configUtil = ConfigUtil.getInstance();
+        this.enableSystemPerf =
+            configUtil.getBoolean(ConfigConst.GATEWAY_DEVICE, ConfigConst.ENABLE_SYSTEM_PERF_KEY);
+
+        if (this.enableSystemPerf) {
+            this.sysPerfMgr = new SystemPerformanceManager();
+            this.sysPerfMgr.setDataMessageListener(this);
+        }
+
+        if (this.enableMqttClient) {
+
+        }
+
+        if (this.enableCoapServer) {
+
+        }
+
+        if (this.enableCloudClient) {
+
+        }
+
+        if (this.enablePersistenceClient) {
+
+        }
+    }
+
+
 	
+ @Override
+    public boolean handleActuatorCommandResponse(ResourceNameEnum resourceName, ActuatorData data)
+    {
+        if (data != null) {
+            _Logger.info("Handling actuator response: " + data.getName());
+
+		    //this.handleIncomingDataAnalysis(resourceName, data);
+
+            if (data.hasError()) {
+                _Logger.warning("Error flag set for ActuatorData instance.");
+            }
+            return true;
+        } else{
+            return false;
+    }}
+
+
+    @Override
+    public boolean handleActuatorCommandRequest(ResourceNameEnum resourceName, ActuatorData data)
+    {
+        if (data != null) {
+            _Logger.info("Handling actuator command request: " + data.getName());
+            return true;
+        }
+        return false;
+    }
+
+
+    @Override
+    public boolean handleIncomingMessage(ResourceNameEnum resourceName, String msg)
+    {
+        if (msg != null) {
+            _Logger.info("Handling incoming message: " + msg);
+            return true;
+        }else{
+            return false;
+    }
+}
+
+    @Override
+    public boolean handleSensorMessage(ResourceNameEnum resourceName, SensorData data)
+    {
+        if (data != null) {
+            _Logger.info("Handling sensor message: " + data.getName());
+
+            if (data.hasError()) {
+                _Logger.warning("Error flag set for SensorData instance.");
+            }
+            return true;
+        }else{
+            return false;
+    }
+}
+
+    @Override
+    public boolean handleSystemPerformanceMessage(ResourceNameEnum resourceName, SystemPerformanceData data)
+    {
+        if (data != null) {
+            _Logger.info("Handling system performance message: " + data.getName());
+
+            if (data.hasError()) {
+                _Logger.warning("Error flag set for SystemPerformanceData instance.");
+            }
+            return true;
+        }else{
+        return false;
+    }
+}
+
+    private void handleIncomingDataAnalysis(ResourceNameEnum resourceName, ActuatorData data)
+    {
+        _Logger.fine("Handling incoming actuator data analysis...");
+           }
+
+    private void handleIncomingDataAnalysis(ResourceNameEnum resourceName, SystemStateData data)
+    {
+        _Logger.fine("Handling incoming system state data analysis...");
+    }
+
+
+    private boolean handleUpstreamTransmission(ResourceNameEnum resourceName, String jsonData, int qos)
+    {
+        _Logger.fine("Handling upstream transmission...");
+        return true;
+    }
+
+
 	public void setActuatorDataListener(String name, IActuatorDataListener listener)
 	{
 	}
 	
-	public void startManager()
-	{
-	}
+    public void startManager()
+    {
+        _Logger.info("Starting DeviceDataManager...");
+
+        if (this.sysPerfMgr != null) {
+            this.sysPerfMgr.startManager();
+        }
+
+        if (this.mqttClient != null) {
+            this.mqttClient.connectClient();
+        }
+
+        if (this.coapServer != null) {
+            this.coapServer.startServer();
+        }
+
+        if (this.cloudClient != null) {
+            this.cloudClient.connectClient();
+        }
+    }
 	
-	public void stopManager()
-	{
-	}
+    public void stopManager()
+    {
+        _Logger.info("Stopping DeviceDataManager...");
+
+        if (this.sysPerfMgr != null) {
+            this.sysPerfMgr.stopManager();
+        }
+
+        if (this.mqttClient != null) {
+            this.mqttClient.disconnectClient();
+        }
+
+        if (this.coapServer != null) {
+            this.coapServer.stopServer();
+        }
+
+        if (this.cloudClient != null) {
+            this.cloudClient.disconnectClient();
+        }
+    }
 
 	
 	// private methods
