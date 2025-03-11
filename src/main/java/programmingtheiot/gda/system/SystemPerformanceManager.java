@@ -62,7 +62,7 @@ public class SystemPerformanceManager
         this.schedExecSvc   = Executors.newScheduledThreadPool(1);
 	    this.sysCpuUtilTask = new SystemCpuUtilTask();
 	    this.sysMemUtilTask = new SystemMemUtilTask();
-        this.sysDiskUtilTask = new SystemDiskUtilTask("/");
+        this.sysDiskUtilTask = new SystemDiskUtilTask();
 
         this.locationID = ConfigUtil.getInstance().getProperty(
             ConfigConst.GATEWAY_DEVICE, ConfigConst.LOCATION_ID_PROP, ConfigConst.NOT_SET
