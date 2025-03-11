@@ -22,9 +22,9 @@ public class SystemPerformanceData extends BaseIotData implements Serializable
 	
 	
 	// private var's
-	private float cpuUtil;   // Declaramos cpuUtil
-    private float diskUtil;  // Declaramos diskUtil
-    private float memUtil;   // Declaramos memUtil
+	private float cpuUtil;
+    private float diskUtil;
+    private float memUtil;
     
 	// constructors
 	
