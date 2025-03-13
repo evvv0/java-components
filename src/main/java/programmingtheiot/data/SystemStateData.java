@@ -91,7 +91,7 @@ public class SystemStateData extends BaseIotData implements Serializable
             this.addSystemPerformanceData(spData);
         }
     }
-
+º
     @Override
     public void updateData(BaseIotData data) {
         if (data instanceof SystemStateData) {
