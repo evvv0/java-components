@@ -119,15 +119,15 @@ public class SystemStateDataTest
 		assertEquals(ssd.getName(), DEFAULT_NAME);
 		assertEquals(ssd.getStatusCode(), DEFAULT_STATUS_CODE);
 		assertTrue(ssd.getCommand() == DEFAULT_ACTION_CMD);
-		
+
 		List<SensorData> sdList = ssd.getSensorDataList();
-		
+
 		for (SensorData sd : sdList) {
 			assertTrue(sd.getValue() == DEFAULT_VAL);
 		}
-		
+
 		List<SystemPerformanceData> spdList = ssd.getSystemPerformanceDataList();
-		
+
 		for (SystemPerformanceData spd : spdList) {
 			assertTrue(spd.getCpuUtilization() == DEFAULT_VAL);
 			assertTrue(spd.getDiskUtilization() == DEFAULT_VAL);

@@ -37,9 +37,11 @@ public class SystemStateData extends BaseIotData implements Serializable
     {
         super();
         super.setName(ConfigConst.SYS_STATE_DATA);
+        super.setStatusCode(ConfigConst.DEFAULT_STATUS);
 
         this.sysPerfDataList =new ArrayList<>();
         this.sensorDataList  =new ArrayList<>();
+        this.command = ConfigConst.DEFAULT_COMMAND;
     }
 
 
@@ -84,11 +86,27 @@ public class SystemStateData extends BaseIotData implements Serializable
         if (data instanceof SensorData) {
             SensorData sData = (SensorData) data;
             this.addSensorData(sData);
-        }
-
-        if (data instanceof SystemPerformanceData) {
+        } else if (data instanceof SystemPerformanceData) {
             SystemPerformanceData spData = (SystemPerformanceData) data;
             this.addSystemPerformanceData(spData);
+        }
+    }
+
+    @Override
+    public void updateData(BaseIotData data) {
+        if (data instanceof SystemStateData) {
+            SystemStateData ssd = (SystemStateData) data;
+
+            this.setName(ssd.getName());
+            this.command = ssd.getCommand();
+            this.setStatusCode(ssd.getStatusCode());
+
+            this.sysPerfDataList.clear();
+            this.sysPerfDataList.addAll(ssd.getSystemPerformanceDataList());
+
+            this.sensorDataList.clear();
+            this.sensorDataList.addAll(ssd.getSensorDataList());
+
         }
     }
 }
