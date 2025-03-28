@@ -15,6 +15,7 @@ import java.util.List;
 import programmingtheiot.common.ConfigConst;
 
 /**
+ * Hola
  * Convenience wrapper to store system state data, including location
  * information, action command, state data and a list of the following
  * data items:
