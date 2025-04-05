@@ -60,24 +60,117 @@ public class MqttClientControlPacketTest
 	
 	// test methods
 	
-	@Test
-	public void testConnectAndDisconnect()
-	{
-		// TODO: implement this test
-	}
+
+        @Test
+    public void testConnectAndDisconnect() {
+        // Conectar al broker MQTT
+        boolean isConnected = this.mqttClient.connectClient();
+        assertTrue("Connection to MQTT broker failed", isConnected);
+
+        // Verificar que el cliente se conectó correctamente
+        _Logger.info("Successfully connected to MQTT broker");
+
+        // Verificar que se generó el paquete CONNECT y CONNACK
+        // El callback 'connectComplete()' debe ser invocado en caso de éxito
+        // Espera un poco para asegurar que los paquetes hayan sido procesados
+        try {
+            Thread.sleep(1000);  // Ajusta el tiempo según sea necesario
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Desconectar del broker MQTT
+        this.mqttClient.disconnectClient();
+
+        // Verificar que se generó el paquete DISCONNECT
+        _Logger.info("Successfully disconnected from MQTT broker");
+
+        // Asegúrate de que la conexión haya terminado
+        assertFalse("Failed to disconnect from MQTT broker", this.mqttClient.isConnected());
+    }
+
 	
-	@Test
-	public void testServerPing()
-	{
-		// TODO: implement this test
-	}
+    @Test
+    public void testServerPing() {
+        // Conectar al broker MQTT
+        boolean isConnected = this.mqttClient.connectClient();
+        assertTrue("Connection to MQTT broker failed", isConnected);
+
+        // Mantener la conexión abierta durante el tiempo suficiente para generar los paquetes PINGREQ y PINGRESP
+        try {
+            Thread.sleep(6000);  // Ajusta el tiempo para que la conexión permanezca activa (más que el Keep-Alive)
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Verificar que el paquete PINGREQ y PINGRESP fueron intercambiados
+        // El paquete PINGRESP debe ser recibido después del PINGREQ automáticamente por el broker
+        _Logger.info("Ping test completed, PINGREQ and PINGRESP exchanged.");
+
+        // Desconectar del broker
+        this.mqttClient.disconnectClient();
+    }
+
 	
-	@Test
-	public void testPubSub()
-	{
-		// TODO: implement this test
-		// 
-		// IMPORTANT: be sure to use QoS 1 and 2 to see ALL control packets
-	}
+    @Test
+    public void testPubSub() {
+        // Conectar al broker MQTT
+        boolean isConnected = this.mqttClient.connectClient();
+        assertTrue("Connection to MQTT broker failed", isConnected);
+
+        // Suscribirse a un tema para generar el paquete SUBSCRIBE y SUBACK
+        int qos = ConfigConst.DEFAULT_QOS;  // Asegúrate de usar QoS 1 o QoS 2 para los siguientes pasos
+
+        boolean subResult = this.mqttClient.subscribeToTopic(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE, qos);
+        assertTrue("Subscription failed", subResult);
+
+        // Publicar un mensaje en QoS 1 para generar los paquetes PUBLISH y PUBACK
+        String testMessage = "Test Message for QoS 1";
+        boolean pubResult = this.mqttClient.publishMessage(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE, testMessage, 1);
+        assertTrue("Publish failed with QoS 1", pubResult);
+
+        // Publicar un mensaje en QoS 2 para generar los paquetes PUBLISH, PUBREC, PUBREL y PUBCOMP
+        testMessage = "Test Message for QoS 2";
+        boolean pubResultQoS2 = this.mqttClient.publishMessage(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE, testMessage, 2);
+        assertTrue("Publish failed with QoS 2", pubResultQoS2);
+
+        // Esperar que los mensajes sean procesados y los paquetes de control generados
+        try {
+            Thread.sleep(2000);  // Ajusta según sea necesario para asegurar que se generen todos los paquetes
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Desconectar del broker
+        this.mqttClient.disconnectClient();
+    }
+
+        @Test
+    public void testUnsubscribe() {
+        // Conectar al broker MQTT
+        boolean isConnected = this.mqttClient.connectClient();
+        assertTrue("Connection to MQTT broker failed", isConnected);
+
+        // Suscribirse a un tema
+        int qos = ConfigConst.DEFAULT_QOS;
+        boolean subResult = this.mqttClient.subscribeToTopic(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE, qos);
+        assertTrue("Subscription failed", subResult);
+
+        // Desuscribirse del tema para generar el paquete UNSUBSCRIBE y UNSUBACK
+        boolean unsubResult = this.mqttClient.unsubscribeFromTopic(ResourceNameEnum.GDA_MGMT_STATUS_MSG_RESOURCE);
+        assertTrue("Unsubscription failed", unsubResult);
+
+        // Esperar que los paquetes de desuscripción sean procesados
+        try {
+            Thread.sleep(1000);  // Ajusta el tiempo según sea necesario
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Desconectar del broker
+        this.mqttClient.disconnectClient();
+    }
+
+
 	
 }
