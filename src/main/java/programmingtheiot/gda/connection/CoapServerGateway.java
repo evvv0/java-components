@@ -10,9 +10,13 @@ package programmingtheiot.gda.connection;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.server.resources.Resource;
+import org.eclipse.californium.core.network.Endpoint;
+import org.eclipse.californium.core.network.interceptors.MessageTracer;
 
 import programmingtheiot.common.ConfigConst;
 import programmingtheiot.common.IDataMessageListener;
@@ -29,7 +33,11 @@ public class CoapServerGateway
 	
 	private static final Logger _Logger =
 		Logger.getLogger(CoapServerGateway.class.getName());
-	
+
+	static {
+	CoapConfig.register();
+	UdpConfig.register();
+}
 	// params
 	
 	private CoapServer coapServer = null;
@@ -60,38 +68,107 @@ public class CoapServerGateway
 		
 	// public methods
 	
-	public void addResource(ResourceNameEnum resource)
-	{
-	}
-	
-	public boolean hasResource(String name)
-	{
-		return false;
-	}
+
+    public void addResource(ResourceNameEnum resource) {
+        if (coapServer != null) {
+            Resource coapResource = createResourceChain(resource);
+            coapServer.add(coapResource);
+            _Logger.log(Level.INFO, "Recurso agregado: " + resource.name());
+        } else {
+            _Logger.log(Level.SEVERE, "CoapServer no está inicializado.");
+        }
+    }
+
+    public boolean hasResource(String name) {
+        return coapServer.getRoot().getChildren().stream()
+                .anyMatch(r -> r.getName().equals(name));
+    }
 	
 	public void setDataMessageListener(IDataMessageListener listener)
-	{
-	}
-	
-	public boolean startServer()
-	{
-		return false;
-	}
-	
-	public boolean stopServer()
-	{
-		return false;
-	}
-	
+{
+        if (listener != null) {
+            this.dataMsgListener = listener;
+    }
+}
+
+    public boolean startServer()
+    {
+        try {
+            if (this.coapServer != null) {
+                this.coapServer.start();
+
+                // for message logging
+                for (Endpoint ep : this.coapServer.getEndpoints()) {
+                    ep.addInterceptor(new MessageTracer());
+                }
+
+                return true;
+            } else {
+                _Logger.warning("CoAP server START failed. Not yet initialized.");
+            }
+        } catch (Exception e) {
+            _Logger.log(Level.SEVERE, "Failed to start CoAP server.", e);
+        }
+
+        return false;
+    }
+
+    public boolean stopServer()
+    {
+        try {
+            if (this.coapServer != null) {
+                this.coapServer.stop();
+
+                return true;
+            } else {
+                _Logger.warning("CoAP server STOP failed. Not yet initialized.");
+            }
+        } catch (Exception e) {
+            _Logger.log(Level.SEVERE, "Failed to stop CoAP server.", e);
+        }
+
+        return false;
+    }
+
 	
 	// private methods
 	
-	private Resource createResourceChain(ResourceNameEnum resource)
-	{
-		return null;
-	}
-	
-	private void initServer(ResourceNameEnum ...resources)
-	{
-	}
+	private Resource createResourceChain(ResourceNameEnum resource) {
+        CoapResource coapResource = new CoapResource(resource.name()) {
+            @Override
+            public void handleGET(CoapRequest request) {
+                CoapResponse response = new CoapResponse("GET response for " + getName());
+                respond(response);
+            }
+
+            @Override
+            public void handlePUT(CoapRequest request) {
+                CoapResponse response = new CoapResponse("PUT response for " + getName());
+                respond(response);
+            }
+
+            @Override
+            public void handlePOST(CoapRequest request) {
+                CoapResponse response = new CoapResponse("POST response for " + getName());
+                respond(response);
+            }
+
+            @Override
+            public void handleDELETE(CoapRequest request) {
+                CoapResponse response = new CoapResponse("DELETE response for " + getName());
+                respond(response);
+            }
+        };
+
+        return coapResource;
+    }
+
+    private void initServer(ResourceNameEnum... resources) {
+        coapServer = new CoapServer();
+        for (ResourceNameEnum resource : resources) {
+            Resource coapResource = createResourceChain(resource);
+            coapServer.add(coapResource);
+        }
+        coapServer.start();
+    }
 }

@@ -101,5 +101,16 @@ public class CoapClientToServerConnectorTest
 	{
 		assertTrue(this.coapClient.sendDiscoveryRequest(DEFAULT_TIMEOUT));
 	}
+
+	@Test
+    public void testSystemPerformancePutMessage()
+    {
+        SystemPerformanceData spData = new SystemPerformanceData();
+
+        String jsonData = DataUtil.getInstance().systemPerformanceDataToJson(spData);
+
+        this.coapClient.sendPutRequest(
+            ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, null, USE_DEFAULT_RESOURCES, jsonData, DEFAULT_TIMEOUT);
+    }
 	
 }

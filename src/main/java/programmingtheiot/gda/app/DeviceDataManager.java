@@ -48,7 +48,7 @@ public class DeviceDataManager implements IDataMessageListener
 	// private var's
 	
 	private boolean enableMqttClient = true;
-	private boolean enableCoapServer = false;
+	private boolean enableCoapServer = true;
 	private boolean enableCloudClient = false;
 	private boolean enableSmtpClient = false;
 	private boolean enablePersistenceClient = false;
@@ -82,6 +82,8 @@ public class DeviceDataManager implements IDataMessageListener
 	    this.enablePersistenceClient = configUtil.getBoolean(
 			ConfigConst.GATEWAY_DEVICE, ConfigConst.ENABLE_PERSISTENCE_CLIENT_KEY);
 
+        this.enableCoapServer = Boolean.parseBoolean(PiotConfig.getProperty("enableCoapServer", "false"));
+
 	    initManager();
 }
 
@@ -102,6 +104,7 @@ public class DeviceDataManager implements IDataMessageListener
         }
 
         if (this.enableCoapServer) {
+            this.coapServer = new CoapServerGateway(this);
 
         }
 
@@ -233,11 +236,6 @@ public class DeviceDataManager implements IDataMessageListener
             }
     }
 
-
-        if (this.coapServer != null) {
-            this.coapServer.startServer();
-        }
-
         if (this.cloudClient != null) {
             this.cloudClient.connectClient();
         }
@@ -245,6 +243,13 @@ public class DeviceDataManager implements IDataMessageListener
         if (this.sysPerfMgr != null) {
 		    this.sysPerfMgr.startManager();
 	}
+	    if (this.enableCoapServer && this.coapServer != null) {
+            if (this.coapServer.startServer()) {
+                _Logger.info("CoAP server started.");
+            } else {
+                _Logger.severe("Failed to start CoAP server. Check log file for details.");
+            }
+        }
 
     }
 	
@@ -273,15 +278,19 @@ public class DeviceDataManager implements IDataMessageListener
 		}
             }
 
-
-        if (this.coapServer != null) {
-            this.coapServer.stopServer();
-        }
-
         if (this.cloudClient != null) {
             this.cloudClient.disconnectClient();
         }
+        if (this.enableCoapServer && this.coapServer != null) {
+            if (this.coapServer.stopServer()) {
+                _Logger.info("CoAP server stopped.");
+            } else {
+                _Logger.severe("Failed to stop CoAP server. Check log file for details.");
+            }
+        }
     }
+
+
 
 	
 	// private methods
