@@ -1,10 +1,80 @@
 package programmingtheiot.gda.connection.handlers;
 
-import org.eclipse.californium.core.coap.CoapExchange;
-import org.eclipse.californium.core.coap.CoapResource;
-import org.eclipse.californium.core.coap.ResponseCode;
-import programmingtheiot.gda.utils.DataUtil;
-import programmingtheiot.gda.data.SensorData;
-import programmingtheiot.gda.listener.IDataMessageListener;
 import java.util.logging.Logger;
 
+import org.eclipse.californium.core.CoapResource;
+import org.eclipse.californium.core.server.resources.CoapExchange;
+import org.eclipse.californium.core.coap.CoAP.ResponseCode;
+
+import programmingtheiot.common.IDataMessageListener;
+import programmingtheiot.common.ResourceNameEnum;
+import programmingtheiot.data.DataUtil;
+import programmingtheiot.data.SystemPerformanceData;
+import programmingtheiot.data.SensorData;
+
+
+public class UpdateTelemetryResourceHandler extends CoapResource {
+
+    private static final Logger _Logger = Logger.getLogger(UpdateTelemetryResourceHandler.class.getName());
+    private IDataMessageListener dataMsgListener = null;
+
+    public UpdateTelemetryResourceHandler(String resourceName) {
+        super(resourceName);
+    }
+
+    public void setDataMessageListener(IDataMessageListener listener) {
+        if (listener != null) {
+            this.dataMsgListener = listener;
+        }
+    }
+
+    @Override
+    public void handlePUT(CoapExchange context) {
+        ResponseCode code = ResponseCode.NOT_ACCEPTABLE;
+
+        context.accept();  // Aceptar la solicitud
+
+        if (this.dataMsgListener != null) {
+            try {
+                String jsonData = new String(context.getRequestPayload());
+
+                // Convertir el JSON a un objeto SensorData
+                SensorData sensorData = DataUtil.getInstance().jsonToSensorData(jsonData);
+
+                // Delegar el manejo de los datos al listener
+                this.dataMsgListener.handleSensorMessage(
+                        ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, sensorData);
+
+                code = ResponseCode.CHANGED;  // Se ha modificado correctamente
+
+            } catch (Exception e) {
+                _Logger.warning("Failed to handle PUT request. Message: " + e.getMessage());
+                code = ResponseCode.BAD_REQUEST;  // Error en el procesamiento
+            }
+        } else {
+            _Logger.info("No callback listener for request. Ignoring PUT.");
+            code = ResponseCode.CONTINUE;
+        }
+
+        String msg = "Update telemetry data request handled: " + super.getName();
+        context.respond(code, msg);  // Responder al cliente
+    }
+
+    @Override
+    public void handleGET(CoapExchange context) {
+        _Logger.info("GET request received for " + super.getName());
+        context.respond(ResponseCode.NOT_FOUND, "GET method not supported for " + super.getName());
+    }
+
+    @Override
+    public void handlePOST(CoapExchange context) {
+        _Logger.info("POST request received for " + super.getName());
+        context.respond(ResponseCode.NOT_IMPLEMENTED, "POST method not supported for " + super.getName());
+    }
+
+    @Override
+    public void handleDELETE(CoapExchange context) {
+        _Logger.info("DELETE request received for " + super.getName());
+        context.respond(ResponseCode.NOT_IMPLEMENTED, "DELETE method not supported for " + super.getName());
+    }
+}

@@ -13,7 +13,11 @@ import java.util.logging.Logger;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
+
+import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
+import org.eclipse.californium.core.server.resources.CoapExchange;
+
 import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.network.Endpoint;
 import org.eclipse.californium.core.network.interceptors.MessageTracer;
@@ -22,6 +26,7 @@ import programmingtheiot.common.ConfigConst;
 import programmingtheiot.common.IDataMessageListener;
 import programmingtheiot.common.ResourceNameEnum;
 import programmingtheiot.gda.connection.handlers.GenericCoapResourceHandler;
+import programmingtheiot.gda.connection.handlers.*;
 
 /**
  * Shell representation of class for student implementation.
@@ -34,14 +39,10 @@ public class CoapServerGateway
 	private static final Logger _Logger =
 		Logger.getLogger(CoapServerGateway.class.getName());
 
-	static {
-	CoapConfig.register();
-	UdpConfig.register();
-}
+
 	// params
 	
 	private CoapServer coapServer = null;
-	
 	private IDataMessageListener dataMsgListener = null;
 	
 	
@@ -55,27 +56,24 @@ public class CoapServerGateway
 	public CoapServerGateway(IDataMessageListener dataMsgListener)
 	{
 		super();
-		
 		/*
 		 * Basic constructor implementation provided. Change as needed.
 		 */
-		
+
 		this.dataMsgListener = dataMsgListener;
-		
 		initServer();
 	}
 
-		
-	// public methods
-	
 
-    public void addResource(ResourceNameEnum resource) {
-        if (coapServer != null) {
-            Resource coapResource = createResourceChain(resource);
-            coapServer.add(coapResource);
-            _Logger.log(Level.INFO, "Recurso agregado: " + resource.name());
+	// public methods
+
+
+    public void addResource(ResourceNameEnum resourceType, String endName, CoapResource resource) {
+        if (resourceType != null && resource != null) {
+            createAndAddResourceChain(resourceType, resource);
+            _Logger.log(Level.INFO, "Recurso agregado: " + resourceType.name());
         } else {
-            _Logger.log(Level.SEVERE, "CoapServer no está inicializado.");
+            _Logger.log(Level.SEVERE, "ResourceType or Resource is null.");
         }
     }
 
@@ -91,13 +89,11 @@ public class CoapServerGateway
     }
 }
 
-    public boolean startServer()
-    {
+    public boolean startServer(){
         try {
             if (this.coapServer != null) {
                 this.coapServer.start();
 
-                // for message logging
                 for (Endpoint ep : this.coapServer.getEndpoints()) {
                     ep.addInterceptor(new MessageTracer());
                 }
@@ -126,49 +122,67 @@ public class CoapServerGateway
         } catch (Exception e) {
             _Logger.log(Level.SEVERE, "Failed to stop CoAP server.", e);
         }
-
         return false;
     }
 
 	
 	// private methods
-	
-	private Resource createResourceChain(ResourceNameEnum resource) {
-        CoapResource coapResource = new CoapResource(resource.name()) {
-            @Override
-            public void handleGET(CoapRequest request) {
-                CoapResponse response = new CoapResponse("GET response for " + getName());
-                respond(response);
-            }
+    private void createAndAddResourceChain(ResourceNameEnum resourceType, CoapResource resource) {
+        _Logger.info("Adding server resource handler chain: " + resourceType.getResourceName());
 
-            @Override
-            public void handlePUT(CoapRequest request) {
-                CoapResponse response = new CoapResponse("PUT response for " + getName());
-                respond(response);
-            }
+        List<String> resourceNames = resourceType.getResourceNameChain();
+        Queue<String> queue = new ArrayBlockingQueue<>(resourceNames.size());
+        queue.addAll(resourceNames);
 
-            @Override
-            public void handlePOST(CoapRequest request) {
-                CoapResponse response = new CoapResponse("POST response for " + getName());
-                respond(response);
-            }
+        CoapResource parentResource = this.coapServer.getRoot();
+        if (parentResource == null) {
+            parentResource = new CoapResource(queue.poll());
+            this.coapServer.add(parentResource);
+        }
 
-            @Override
-            public void handleDELETE(CoapRequest request) {
-                CoapResponse response = new CoapResponse("DELETE response for " + getName());
-                respond(response);
-            }
-        };
+        while (!queue.isEmpty()) {
+            String resourceName = queue.poll();
+            CoapResource nextResource = parentResource.getChild(resourceName);
 
-        return coapResource;
+            if (nextResource == null) {
+                if (queue.isEmpty()) {
+                    nextResource = resource;
+                    nextResource.setName(resourceName);
+                } else {
+                    nextResource = new CoapResource(resourceName);
+                }
+                parentResource.add(nextResource);
+            }
+            parentResource = nextResource;
+        }
     }
 
     private void initServer(ResourceNameEnum... resources) {
         coapServer = new CoapServer();
-        for (ResourceNameEnum resource : resources) {
-            Resource coapResource = createResourceChain(resource);
-            coapServer.add(coapResource);
-        }
-        coapServer.start();
+        initDefaultResources();
     }
+
+    private void initDefaultResources() {
+        GetActuatorCommandResourceHandler getActuatorCmdResourceHandler =
+                new GetActuatorCommandResourceHandler(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.getResourceType());
+
+        if (this.dataMsgListener != null) {
+            this.dataMsgListener.setActuatorDataListener(null, getActuatorCmdResourceHandler);
+        }
+
+        addResource(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE, null, getActuatorCmdResourceHandler);
+
+        UpdateTelemetryResourceHandler updateTelemetryResourceHandler =
+                new UpdateTelemetryResourceHandler(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE.getResourceType());
+
+        updateTelemetryResourceHandler.setDataMessageListener(this.dataMsgListener);
+        addResource(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, null, updateTelemetryResourceHandler);
+
+        UpdateSystemPerformanceResourceHandler updateSystemPerformanceResourceHandler =
+                new UpdateSystemPerformanceResourceHandler(ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE.getResourceType());
+
+        updateSystemPerformanceResourceHandler.setDataMessageListener(this.dataMsgListener);
+        addResource(ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, null, updateSystemPerformanceResourceHandler);
+    }
+
 }

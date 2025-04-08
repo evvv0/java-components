@@ -34,6 +34,8 @@ import programmingtheiot.gda.connection.MqttClientConnector;
 import programmingtheiot.gda.connection.RedisPersistenceAdapter;
 import programmingtheiot.gda.connection.SmtpClientConnector;
 
+
+
 /**
  * Shell representation of class for student implementation.
  *
@@ -82,7 +84,6 @@ public class DeviceDataManager implements IDataMessageListener
 	    this.enablePersistenceClient = configUtil.getBoolean(
 			ConfigConst.GATEWAY_DEVICE, ConfigConst.ENABLE_PERSISTENCE_CLIENT_KEY);
 
-        this.enableCoapServer = Boolean.parseBoolean(PiotConfig.getProperty("enableCoapServer", "false"));
 
 	    initManager();
 }
@@ -188,10 +189,17 @@ public class DeviceDataManager implements IDataMessageListener
     }
 }
 
-    private void handleIncomingDataAnalysis(ResourceNameEnum resourceName, ActuatorData data)
-    {
-        _Logger.fine("Handling incoming actuator data analysis...");
-           }
+    private void handleIncomingDataAnalysis(ResourceNameEnum resource, ActuatorData data) {
+        _Logger.info("Analyzing incoming actuator data: " + data.getName());
+
+        if (data.isResponseFlagEnabled()) {
+
+        } else {
+            if (this.actuatorDataListener != null) {
+                this.actuatorDataListener.onActuatorDataUpdate(data);
+            }
+        }
+    }
 
     private void handleIncomingDataAnalysis(ResourceNameEnum resourceName, SystemStateData data)
     {
@@ -208,6 +216,9 @@ public class DeviceDataManager implements IDataMessageListener
 
 	public void setActuatorDataListener(String name, IActuatorDataListener listener)
 	{
+	    if (listener != null) {
+            this.actuatorDataListener = listener;
+        }
 	}
 	
     public void startManager()

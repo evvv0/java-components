@@ -23,6 +23,10 @@ import programmingtheiot.common.DefaultDataMessageListener;
 import programmingtheiot.common.IDataMessageListener;
 import programmingtheiot.gda.connection.*;
 
+import programmingtheiot.data.SystemPerformanceData;
+import programmingtheiot.data.DataUtil;
+import programmingtheiot.common.ResourceNameEnum;
+
 /**
  * This test case class contains very basic integration tests for
  * CoapClientToServerConnector. It should not be considered complete,
@@ -58,18 +62,23 @@ public class CoapClientToServerConnectorTest
 	public static void setUpBeforeClass() throws Exception
 	{
 		_ServerGateway = new CoapServerGateway(new DefaultDataMessageListener());
-		
+
 		assertTrue(_ServerGateway.startServer());
 	}
 	
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception
-	{
-		assertTrue(_ServerGateway.stopServer());
-	}
+
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+        if (_ServerGateway != null) {
+            assertTrue("Failed to stop server", _ServerGateway.stopServer());
+        } else {
+            _Logger.warning("CoapServerGateway was not initialized, skipping shutdown.");
+        }
+    }
+
 	
 	/**
 	 * @throws java.lang.Exception
@@ -112,5 +121,5 @@ public class CoapClientToServerConnectorTest
         this.coapClient.sendPutRequest(
             ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, null, USE_DEFAULT_RESOURCES, jsonData, DEFAULT_TIMEOUT);
     }
-	
+
 }
