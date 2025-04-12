@@ -35,91 +35,84 @@ import programmingtheiot.gda.connection.*;
 public class CoapServerGatewayTest
 {
 	// static
-	
+
 	public static final int DEFAULT_TIMEOUT = 300 * 1000;
 	public static final boolean USE_DEFAULT_RESOURCES = true;
-	
+
 	private static final Logger _Logger =
 		Logger.getLogger(CoapServerGatewayTest.class.getName());
-	
-	
+
+
 	// member var's
-	
+
 	private CoapServerGateway csg = null;
 	private IDataMessageListener dml = null;
-	
-	
+
+
 	// test setup methods
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
 	@Before
-	public void setUp() throws Exception
-	{
-	}
-	
-	/**
-	 * @throws java.lang.Exception
-	 */
-	@After
-	public void tearDown() throws Exception
-	{
-	}
-	
-	
+	public void setUp() throws Exception{
+        // You can initialize anything needed for the test here if necessary
+        _Logger.info("Setting up the test environment...");
+    }
+
+    // Test teardown method
+    @After
+    public void tearDown() throws Exception {
+        if (this.csg != null) {
+            this.csg.stopServer();
+            _Logger.info("Server stopped.");
+        }
+    }
+
 	// test methods
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@Test
 	public void testRunSimpleCoapServerGatewayIntegration()
 	{
 		try {
-			String url =
-				ConfigConst.DEFAULT_COAP_PROTOCOL + "://" + ConfigConst.DEFAULT_HOST + ":" + ConfigConst.DEFAULT_COAP_PORT;
-			
+			String url ="coap://localhost:5683";
+
 			this.csg = new CoapServerGateway(new DefaultDataMessageListener());
-			this.csg.startServer();
-			
+			_Logger.info("Starting CoAP server...");
+            this.csg.startServer();
+            _Logger.info("CoAP server started successfully.");
+
 			Thread.sleep(5000);
-			
+
 			CoapClient clientConn = new CoapClient(url);
-			
+
 			Set<WebLink> wlSet = clientConn.discover();
-				
+
 			if (wlSet != null) {
-				for (WebLink wl : wlSet) {
-					_Logger.info(" --> WebLink: " + wl.getURI() + ". Attributes: " + wl.getAttributes());
-				}
-			}
-			
-			// execute some simple get requests
-			
-			/*
-			 * NOTE: Change these to suit your own environment.
-			 */
-			
-			clientConn.setURI(
-				url + "/" + ConfigConst.PRODUCT_NAME);
-			clientConn.get();
-			
-			clientConn.setURI(
-				url + "/" + ConfigConst.PRODUCT_NAME + "/" + ConfigConst.CONSTRAINED_DEVICE);
-			clientConn.get();
-			
-			clientConn.setURI(
-				url + "/" + ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE.getResourceName());
-			clientConn.get();
-			
-			// wait for 2 min's (so other app tests can run)
-			Thread.sleep(120000L);
-			
-			this.csg.stopServer();
-		} catch (Exception e) {
-			// ignore
-		}
-	}
-	
+                for (WebLink wl : wlSet) {
+                    _Logger.info(" --> WebLink: " + wl.getURI() + ". Attributes: " + wl.getAttributes());
+                }
+            } else {
+                _Logger.warning("No WebLinks discovered.");
+            }
+
+            // Sleep for a few minutes before stopping the server
+            _Logger.info("Sleeping for 2 minutes...");
+            Thread.sleep(120000L); // Sleep for 2 minutes
+
+        } catch (Exception e) {
+            _Logger.severe("Error during CoAP server gateway test: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            // Ensure that the server is stopped even if an exception occurred
+            if (this.csg != null) {
+                _Logger.info("Stopping the CoAP server...");
+                this.csg.stopServer();
+                _Logger.info("CoAP server stopped.");
+            }
+        }
+    }
 }

@@ -35,22 +35,22 @@ import programmingtheiot.gda.connection.handlers.*;
 public class CoapServerGateway
 {
 	// static
-	
+
 	private static final Logger _Logger =
 		Logger.getLogger(CoapServerGateway.class.getName());
 
 
 	// params
-	
+
 	private CoapServer coapServer = null;
 	private IDataMessageListener dataMsgListener = null;
-	
-	
+
+
 	// constructors
-	
+
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataMsgListener
 	 */
 	public CoapServerGateway(IDataMessageListener dataMsgListener)
@@ -68,7 +68,7 @@ public class CoapServerGateway
 	// public methods
 
 
-    public void addResource(ResourceNameEnum resourceType, String endName, CoapResource resource) {
+    public void addResource(ResourceNameEnum resourceType, String endName, Resource resource) {
         if (resourceType != null && resource != null) {
             createAndAddResourceChain(resourceType, resource);
             _Logger.log(Level.INFO, "Recurso agregado: " + resourceType.name());
@@ -81,7 +81,7 @@ public class CoapServerGateway
         return coapServer.getRoot().getChildren().stream()
                 .anyMatch(r -> r.getName().equals(name));
     }
-	
+
 	public void setDataMessageListener(IDataMessageListener listener)
 {
         if (listener != null) {
@@ -125,16 +125,16 @@ public class CoapServerGateway
         return false;
     }
 
-	
+
 	// private methods
-    private void createAndAddResourceChain(ResourceNameEnum resourceType, CoapResource resource) {
+    private void createAndAddResourceChain(ResourceNameEnum resourceType, Resource resource) {
         _Logger.info("Adding server resource handler chain: " + resourceType.getResourceName());
 
         List<String> resourceNames = resourceType.getResourceNameChain();
         Queue<String> queue = new ArrayBlockingQueue<>(resourceNames.size());
         queue.addAll(resourceNames);
 
-        CoapResource parentResource = this.coapServer.getRoot();
+        Resource parentResource = this.coapServer.getRoot();
         if (parentResource == null) {
             parentResource = new CoapResource(queue.poll());
             this.coapServer.add(parentResource);
@@ -142,7 +142,7 @@ public class CoapServerGateway
 
         while (!queue.isEmpty()) {
             String resourceName = queue.poll();
-            CoapResource nextResource = parentResource.getChild(resourceName);
+            Resource nextResource = parentResource.getChild(resourceName);
 
             if (nextResource == null) {
                 if (queue.isEmpty()) {
