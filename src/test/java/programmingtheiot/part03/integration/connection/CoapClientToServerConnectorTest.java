@@ -38,23 +38,23 @@ import programmingtheiot.common.ResourceNameEnum;
 public class CoapClientToServerConnectorTest
 {
 	// static
-	
+
 	public static final int DEFAULT_TIMEOUT = 5;
 	public static final boolean USE_DEFAULT_RESOURCES = true;
-	
+
 	private static final Logger _Logger =
 		Logger.getLogger(CoapClientToServerConnectorTest.class.getName());
-	
+
 	private static CoapServerGateway _ServerGateway = null;
-	
+
 	// member var's
-	
+
 	private CoapClientConnector coapClient = null;
 	private IDataMessageListener dataMsgListener = null;
-	
-	
+
+
 	// test setup methods
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -65,7 +65,7 @@ public class CoapClientToServerConnectorTest
 
 		assertTrue(_ServerGateway.startServer());
 	}
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -79,7 +79,7 @@ public class CoapClientToServerConnectorTest
         }
     }
 
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -88,10 +88,10 @@ public class CoapClientToServerConnectorTest
 	{
 		this.coapClient = new CoapClientConnector();
 		this.dataMsgListener = new DefaultDataMessageListener();
-		
+
 		this.coapClient.setDataMessageListener(this.dataMsgListener);
 	}
-	
+
 	/**
 	 * @throws java.lang.Exception
 	 */
@@ -99,11 +99,11 @@ public class CoapClientToServerConnectorTest
 	public void tearDown() throws Exception
 	{
 	}
-	
+
 	// test methods
-	
+
 	/**
-	 * 
+	 *
 	 */
 	@Test
 	public void testConnectAndDiscover()

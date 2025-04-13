@@ -218,6 +218,7 @@ public class DeviceDataManager implements IDataMessageListener
 	{
 	    if (listener != null) {
             this.actuatorDataListener = listener;
+            _Logger.info("ActuatorDataListener set: " + listener.getClass().getSimpleName());
         }
 	}
 	

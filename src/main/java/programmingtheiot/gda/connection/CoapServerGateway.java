@@ -28,6 +28,8 @@ import programmingtheiot.common.ResourceNameEnum;
 import programmingtheiot.gda.connection.handlers.GenericCoapResourceHandler;
 import programmingtheiot.gda.connection.handlers.*;
 
+
+import org.eclipse.californium.elements.config.Configuration;
 /**
  * Shell representation of class for student implementation.
  * 
@@ -114,7 +116,7 @@ public class CoapServerGateway
         try {
             if (this.coapServer != null) {
                 this.coapServer.stop();
-
+                _Logger.info("CoAP server stopped successfully.");
                 return true;
             } else {
                 _Logger.warning("CoAP server STOP failed. Not yet initialized.");
@@ -158,7 +160,8 @@ public class CoapServerGateway
     }
 
     private void initServer(ResourceNameEnum... resources) {
-        coapServer = new CoapServer();
+        Configuration config = Configuration.createStandardWithoutFile();
+        this.coapServer = new CoapServer(config);
         initDefaultResources();
     }
 
