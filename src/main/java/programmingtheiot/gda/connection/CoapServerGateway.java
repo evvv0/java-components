@@ -28,7 +28,6 @@ import programmingtheiot.common.ResourceNameEnum;
 import programmingtheiot.gda.connection.handlers.GenericCoapResourceHandler;
 import programmingtheiot.gda.connection.handlers.*;
 
-
 import org.eclipse.californium.elements.config.Configuration;
 /**
  * Shell representation of class for student implementation.

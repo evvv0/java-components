@@ -18,6 +18,11 @@ public class UpdateTelemetryResourceHandler extends CoapResource {
     private static final Logger _Logger = Logger.getLogger(UpdateTelemetryResourceHandler.class.getName());
     private IDataMessageListener dataMsgListener = null;
 
+    public UpdateTelemetryResourceHandler(ResourceNameEnum resource)
+	{
+		this(resource.getResourceName());
+	}
+
     public UpdateTelemetryResourceHandler(String resourceName) {
         super(resourceName);
     }
@@ -60,21 +65,25 @@ public class UpdateTelemetryResourceHandler extends CoapResource {
         context.respond(code, msg);  // Responder al cliente
     }
 
-    @Override
-    public void handleGET(CoapExchange context) {
-        _Logger.info("GET request received for " + super.getName());
-        context.respond(ResponseCode.NOT_FOUND, "GET method not supported for " + super.getName());
+     @Override
+     public void handleGET(CoapExchange context){
+        context.accept();
+        _Logger.info("GET request received.");
+        context.respond(ResponseCode.CONTENT, "Resource data");
     }
 
     @Override
-    public void handlePOST(CoapExchange context) {
-        _Logger.info("POST request received for " + super.getName());
-        context.respond(ResponseCode.NOT_IMPLEMENTED, "POST method not supported for " + super.getName());
+    public void handlePOST(CoapExchange context){
+        context.accept();
+        _Logger.info("POST request received. Payload: " + new String(context.getRequestPayload()));
+        context.respond(ResponseCode.CHANGED, "POST request handled: " + super.getName());
     }
 
+
     @Override
-    public void handleDELETE(CoapExchange context) {
-        _Logger.info("DELETE request received for " + super.getName());
-        context.respond(ResponseCode.NOT_IMPLEMENTED, "DELETE method not supported for " + super.getName());
+    public void handleDELETE(CoapExchange context){
+        context.accept();
+        _Logger.info("DELETE request received for resource: " + super.getName());
+        context.respond(ResponseCode.DELETED, "DELETE request handled: " + super.getName());
     }
 }

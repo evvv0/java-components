@@ -10,6 +10,8 @@ package programmingtheiot.gda.connection;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Set;
+
 
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
@@ -23,6 +25,14 @@ import programmingtheiot.common.IDataMessageListener;
 import programmingtheiot.common.ResourceNameEnum;
 
 import programmingtheiot.data.DataUtil;
+
+import org.eclipse.californium.core.coap.LinkFormat;
+import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.core.coap.Response;
+import org.eclipse.californium.core.coap.CoAP.Code;
+import org.eclipse.californium.core.coap.CoAP.Type;
+
+
 
 /**
  * Shell representation of class for student implementation.
@@ -63,11 +73,35 @@ public class CoapClientConnector implements IRequestResponseClient
 	
 	// public methods
 	
-	@Override
-	public boolean sendDiscoveryRequest(int timeout)
-	{
-		return false;
-	}
+    @Override
+    public boolean sendDiscoveryRequest(int timeout)
+    {
+        try {
+            _Logger.info("Issuing discover...");
+
+            // Send GET to /.well-known/core
+            CoapClient client = new CoapClient("coap://localhost:5683/.well-known/core");
+            CoapResponse response = client.get();
+
+            if (response != null && response.isSuccess()) {
+                String responseText = response.getResponseText();
+                _Logger.info("Discovery Response: " + responseText);
+
+                // Parse each link
+                Set<WebLink> links = LinkFormat.parse(responseText);
+                for (WebLink link : links) {
+                    _Logger.info("  --> URI: " + link.getURI() + ". Attributes: " + link.getAttributes());
+                }
+                return true;
+            } else {
+                _Logger.warning("Discovery failed or response is null.");
+            }
+        } catch (Exception e) {
+            _Logger.log(Level.SEVERE, "Exception during discovery", e);
+        }
+        return false;
+    }
+
 
 	@Override
 	public boolean sendDeleteRequest(ResourceNameEnum resource, String name, boolean enableCON, int timeout)
