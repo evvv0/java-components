@@ -29,7 +29,6 @@ public class GetActuatorCommandResourceHandler extends CoapResource
 	public GetActuatorCommandResourceHandler(String resourceName)
 	{
 		super(resourceName);
-
 		super.setObservable(true);
 	}
 
@@ -49,8 +48,13 @@ public class GetActuatorCommandResourceHandler extends CoapResource
 	@Override
 	public boolean onActuatorDataUpdate(ActuatorData data)
 	{
-		if (data != null && this.actuatorData != null) {
-			this.actuatorData.updateData(data);
+		if (data != null) {
+            if (this.actuatorData == null) {
+                this.actuatorData = data;
+            } else {
+                this.actuatorData.updateData(data);
+            }
+
 
 			// Notify all connected clients that the data has changed
 			super.changed();
@@ -70,27 +74,19 @@ public class GetActuatorCommandResourceHandler extends CoapResource
 	 *
 	 * @param context The CoapExchange containing the request context
 	 */
-	@Override
-	public void handleGET(CoapExchange context)
-	{
-		_Logger.info("Received GET request for resource: " + getName());
-	    context.accept();
+    @Override
+    public void handleGET(CoapExchange context)
+    {
+        _Logger.info("Received GET request for resource: " + getName());
+        context.accept();
 
-		if (this.actuatorData != null) {
-
+        if (this.actuatorData != null) {
             String jsonData = DataUtil.getInstance().actuatorDataToJson(this.actuatorData);
-
-
             context.respond(ResponseCode.CONTENT, jsonData, MediaTypeRegistry.APPLICATION_JSON);
-
-
-            context.respond(ResponseCode.CONTENT, jsonData);
             _Logger.fine("Actuator data sent: " + jsonData);
-
         } else {
-
-            context.respond(ResponseCode.NOT_FOUND, "No actuator data available");
-
+            String emptyJson = "{\"message\": \"No actuator data available\"}";
+            context.respond(ResponseCode.CONTENT, emptyJson, MediaTypeRegistry.APPLICATION_JSON);
             _Logger.warning("No actuator data available for URI: " + getURI());
         }
     }
