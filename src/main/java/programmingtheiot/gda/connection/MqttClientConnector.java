@@ -143,13 +143,13 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
     {
         // Verificar si el tema es nulo
         if (topicName == null) {
-            _Logger.warning("Resource is null. Unable to publish message: " + this.brokerAddr);
+            //_Logger.warning("Resource is null. Unable to publish message: " + this.brokerAddr);
             return false;
         }
 
         // Verificar si el mensaje es nulo o vacío
         if (msg == null || msg.length() == 0) {
-            _Logger.warning("Message is null or empty. Unable to publish message: " + this.brokerAddr);
+            //_Logger.warning("Message is null or empty. Unable to publish message: " + this.brokerAddr);
             return false;
         }
 
@@ -170,7 +170,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 
             return true;
         } catch (Exception e) {
-            _Logger.log(Level.SEVERE, "Failed to publish message to topic: " + topicName, e);
+            //_Logger.log(Level.SEVERE, "Failed to publish message to topic: " + topicName, e);
         }
 
         return false;
@@ -268,7 +268,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
     public void deliveryComplete(IMqttDeliveryToken token)
     {
         // Log de entrega completa del mensaje
-        _Logger.fine("Delivered MQTT message with ID: " + token.getMessageId());
+       // _Logger.fine("Delivered MQTT message with ID: " + token.getMessageId());
     }
 
 
