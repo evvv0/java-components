@@ -33,15 +33,15 @@ import programmingtheiot.common.SimpleCertManagementUtil;
 
 /**
  * Shell representation of class for student implementation.
- * 
+ *
  */
 public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 {
 	// static
-	
+
 	private static final Logger _Logger =
 		Logger.getLogger(MqttClientConnector.class.getName());
-	
+
 	// params
 	private boolean               useAsyncClient    = false;
 
@@ -67,8 +67,9 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
     {
         super();
 
-        ConfigUtil configUtil = ConfigUtil.getInstance();
         initClientParameters(ConfigConst.MQTT_GATEWAY_SERVICE);
+       /* ConfigUtil configUtil = ConfigUtil.getInstance();
+
 
         this.host = configUtil.getProperty(
             ConfigConst.MQTT_GATEWAY_SERVICE, ConfigConst.HOST_KEY, ConfigConst.DEFAULT_HOST);
@@ -92,16 +93,18 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
         this.connOpts.setAutomaticReconnect(true);
 
         this.brokerAddr = this.protocol + "://" + this.host + ":" + this.port;
+   */
     }
 
-	
-	
+
+
 	// public methods
     @Override
     public boolean connectClient()
     {
         try {
             if (this.mqttClient == null) {
+                //this.mqttClient = new MqttAsyncClient(this.brokerAddr, this.clientID, this.persistence);
                 this.mqttClient = new MqttClient(this.brokerAddr, this.clientID, this.persistence);
                 this.mqttClient.setCallback(this);
             }
@@ -153,13 +156,13 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
     {
         // Verificar si el tema es nulo
         if (topicName == null) {
-            //_Logger.warning("Resource is null. Unable to publish message: " + this.brokerAddr);
+            _Logger.warning("Resource is null. Unable to publish message: " + this.brokerAddr);
             return false;
         }
 
         // Verificar si el mensaje es nulo o vacío
         if (msg == null || msg.length() == 0) {
-            //_Logger.warning("Message is null or empty. Unable to publish message: " + this.brokerAddr);
+            _Logger.warning("Message is null or empty. Unable to publish message: " + this.brokerAddr);
             return false;
         }
 
@@ -241,7 +244,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 	{
 		return false;
 	}
-	
+
 	@Override
     public boolean setDataMessageListener(IDataMessageListener listener)
     {
@@ -255,7 +258,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
         return false;
     }
 
-	
+
 	// callbacks
 
     @Override
@@ -263,7 +266,13 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
     {
         // Log del éxito de la conexión
         _Logger.info("MQTT connection successful (is reconnect = " + reconnect + "). Broker: " + serverURI);
-    }
+
+        /*int qos = 1;
+
+		this.subscribeToTopic(ResourceNameEnum.CDA_ACTUATOR_RESPONSE_RESOURCE, qos);
+		this.subscribeToTopic(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, qos);
+		this.subscribeToTopic(ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, qos);
+    */}
 
 
     @Override
@@ -278,7 +287,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
     public void deliveryComplete(IMqttDeliveryToken token)
     {
         // Log de entrega completa del mensaje
-       // _Logger.fine("Delivered MQTT message with ID: " + token.getMessageId());
+        _Logger.fine("Delivered MQTT message with ID: " + token.getMessageId());
     }
 
 
@@ -290,12 +299,12 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
     }
 
 
-	
+
 	// private methods
-	
+
 	/**
 	 * Called by the constructor to set the MQTT client parameters to be used for the connection.
-	 * 
+	 *
 	 * @param configSectionName The name of the configuration section to use for
 	 * the MQTT client configuration parameters.
 	 */
@@ -334,10 +343,10 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
         _Logger.info("Using URL for broker conn: " + this.brokerAddr);
     }
 
-	
+
 	/**
 	 * Called by {@link #initClientParameters(String)} to load credentials.
-	 * 
+	 *
 	 * @param configSectionName The name of the configuration section to use for
 	 * the MQTT client configuration parameters.
 	 */
@@ -363,10 +372,10 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
         }
     }
 
-	
+
 	/**
 	 * Called by {@link #initClientParameters(String)} to enable encryption.
-	 * 
+	 *
 	 * @param configSectionName The name of the configuration section to use for
 	 * the MQTT client configuration parameters.
 	 */

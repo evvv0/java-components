@@ -47,7 +47,7 @@ securePort     = 8883
 defaultQoS     = 0
 keepAlive      = 60
 enableAuth     = False
-enableCrypt    = True
+enableCrypt    = False
 useAsyncClient = False
 
 #
