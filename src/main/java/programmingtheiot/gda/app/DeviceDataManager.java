@@ -489,7 +489,7 @@ public class DeviceDataManager implements IDataMessageListener
 
 
 
-	
+
 	// private methods
 	
 	/**
