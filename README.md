@@ -38,6 +38,26 @@ Lastly, here are some 'dot' ('.{filename}') files pertaining to dev environment 
 
 NOTE: The directory structure and all files are subject to change based on feedback I receive from readers of my book and students in my IoT class, as well as improvements I find to be helpful for overall repo betterment.
 
+# GDA CoAP Client Performance Test Results
+
+INFO: Testing PUT - CON
+May 21, 2025 1:30:32 PM programmingtheiot.part03.integration.connection.CoapClientPerformanceTest execTestPut
+INFO: PUT message - useCON = true [10000]: 18563218 ms
+May 21, 2025 1:30:32 PM programmingtheiot.part03.integration.connection.CoapClientPerformanceTest testPutRequestNon
+INFO: Testing PUT - NON
+May 21, 2025 1:30:32 PM programmingtheiot.part03.integration.connection.CoapClientPerformanceTest execTestPut
+INFO: PUT message - useCON = false [10000]: 242186 ms
+May 21, 2025 1:30:32 PM programmingtheiot.part03.integration.connection.CoapClientPerformanceTest testPostRequestCon
+INFO: Testing POST - CON
+May 21, 2025 1:30:32 PM programmingtheiot.part03.integration.connection.CoapClientPerformanceTest execTestPost
+INFO: POST message - useCON = true [10000]: 274792 ms
+May 21, 2025 1:30:32 PM programmingtheiot.part03.integration.connection.CoapClientPerformanceTest testPostRequestNon
+INFO: Testing POST - NON
+May 21, 2025 1:30:32 PM programmingtheiot.part03.integration.connection.CoapClientPerformanceTest execTestPost
+INFO: POST message - useCON = false [10000]: 724838 ms
+
+Los tiempos registrados fueron: PUT-CON: 18,563,218 ms, PUT-NON: 242,186 ms, POST-CON: 274,792 ms y POST-NON: 724,838 ms. Al comparar los resultados tomando como referencia los modos NON, se observó que las solicitudes CON fueron significativamente más lentas, especialmente en PUT, con una diferencia del 98.7%. En contraste, POST-CON fue más rápido que POST-NON con una diferencia del 62.1%. En general, la prueba más rápida fue PUT-NON, mientras que la más lenta fue PUT-CON, lo que resalta el mayor coste en tiempo de los mensajes confirmables frente a los no confirmables.
+
 # Other things to know
 
 ## Pull requests
