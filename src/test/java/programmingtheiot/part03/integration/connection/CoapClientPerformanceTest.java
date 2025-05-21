@@ -144,32 +144,33 @@ public class CoapClientPerformanceTest
 		SensorData sd = new SensorData();
 		String payload = DataUtil.getInstance().sensorDataToJson(sd);
 				
-		long startMillis = System.currentTimeMillis();
-		
+		long start = System.nanoTime();
+
 		for (int seqNo = 0; seqNo < maxTestRuns; seqNo++) {
 			this.coapClient.sendPostRequest(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, ConfigConst.TEMP_SENSOR_NAME, enableCON, payload, DEFAULT_TIMEOUT);
 		}
-		
-		long endMillis = System.currentTimeMillis();
-		long elapsedMillis = endMillis - startMillis;
-				
+
+        long end = System.nanoTime();
+        long elapsedMillis=(end - start);
+
 		_Logger.info("POST message - useCON = " + enableCON + " [" + maxTestRuns + "]: " + elapsedMillis + " ms");
 	}
-	
+
 	private void execTestPut(int maxTestRuns, boolean enableCON)
 	{
 		SensorData sd = new SensorData();
 		String payload = DataUtil.getInstance().sensorDataToJson(sd);
-				
-		long startMillis = System.currentTimeMillis();
-		
+
+		long start = System.nanoTime();
+
 		for (int seqNo = 0; seqNo < maxTestRuns; seqNo++) {
 			this.coapClient.sendPutRequest(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, ConfigConst.TEMP_SENSOR_NAME, enableCON, payload, DEFAULT_TIMEOUT);
 		}
-		
-		long endMillis = System.currentTimeMillis();
-		long elapsedMillis = endMillis - startMillis;
-				
+
+        long end = System.nanoTime();
+        long elapsedMillis=(end - start);
+
+
 		_Logger.info("PUT message - useCON = " + enableCON + " [" + maxTestRuns + "]: " + elapsedMillis + " ms");
 	}
 	
