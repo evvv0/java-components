@@ -22,6 +22,7 @@ import programmingtheiot.common.ConfigConst;
 import programmingtheiot.common.DefaultDataMessageListener;
 import programmingtheiot.common.ResourceNameEnum;
 import programmingtheiot.data.SensorData;
+import programmingtheiot.data.ActuatorData;
 import programmingtheiot.data.SystemPerformanceData;
 import programmingtheiot.gda.app.DeviceDataManager;
 import programmingtheiot.gda.connection.*;
@@ -34,8 +35,7 @@ import programmingtheiot.gda.connection.*;
  * environment.
  *
  */
-public class CloudClientConnectorTest
-{
+public class CloudClientConnectorTest {
 	// static
 	
 	private static final Logger _Logger =
@@ -46,6 +46,7 @@ public class CloudClientConnectorTest
 	
 	private List<ICloudClient> cloudClientList = null;
 	private ICloudClient cloudClient = null;
+	private boolean actuatorEventReceived = false;
 	
 	
 	// test setup methods
@@ -63,8 +64,10 @@ public class CloudClientConnectorTest
 	 * @throws java.lang.Exception
 	 */
 	@After
-	public void tearDown() throws Exception
-	{
+	public void tearDown() throws Exception {
+		if (this.cloudClient != null) {
+			this.cloudClient.disconnectClient();
+		}
 	}
 	
 	// test methods
@@ -198,5 +201,91 @@ public class CloudClientConnectorTest
 			// ignore
 		}
 	}
-	
+
+
+	/**
+	 * Test 1: Publish a SensorData to the cloud and verify it's accepted.
+	 */
+	@Test
+	public void test1_publishSensorData() {
+		assertTrue("Cloud client failed to connect", this.cloudClient.connectClient());
+
+		SensorData sensorData = new SensorData();
+		sensorData.setName(ConfigConst.TEMP_SENSOR_NAME);
+		sensorData.setValue(25.5f);
+
+		assertTrue("Failed to send sensor data",
+			this.cloudClient.sendEdgeDataToCloud(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, sensorData));
+
+		_Logger.info("SensorData published successfully.");
+		sleep(5000); // espera para asegurar publicación
+	}
+
+	/**
+	 * Test 2: Trigger actuator event and verify reception.
+	 */
+	@Test
+	public void test2_triggerAndReceiveActuation() {
+		this.cloudClient.setDataMessageListener(new DefaultDataMessageListener() {
+
+			public void handleActuatorCommandMessage(ResourceNameEnum resource, ActuatorData data) {
+				_Logger.info("ActuatorData recibido: " + data.toString());
+				actuatorEventReceived = true;
+			}
+		});
+
+		assertTrue("Cloud client failed to connect", this.cloudClient.connectClient());
+
+		// Subscribirse a eventos
+		assertTrue(this.cloudClient.subscribeToCloudEvents(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE));
+
+		// Simular cruce de umbral
+		for (int i = 0; i < 3; i++) {
+			SensorData sensorData = new SensorData();
+			sensorData.setName(ConfigConst.TEMP_SENSOR_NAME);
+			sensorData.setValue(100.0f); // valor alto que debe disparar evento
+
+			assertTrue("Failed to send high value sensor data",
+				this.cloudClient.sendEdgeDataToCloud(ResourceNameEnum.CDA_SENSOR_MSG_RESOURCE, sensorData));
+
+			sleep(3000); // Esperar a que la nube procese y publique evento
+		}
+
+		// Esperar recepción del evento
+		sleep(15000);
+
+		assertTrue("Actuator event not received", actuatorEventReceived);
+
+		this.cloudClient.unsubscribeFromCloudEvents(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE);
+	}
+
+	/**
+	 * Test 3: Prueba de integración end-to-end con GDA y CDA
+	 * Este test requiere ejecución del sistema real.
+	 */
+	@Test
+	public void test3_endToEnd_GDA_CDA_Cloud() {
+		DeviceDataManager ddm = new DeviceDataManager();
+		ddm.startManager();
+
+		_Logger.info("GDA iniciado. Esperando eventos de CDA durante 5 minutos...");
+
+		sleep(5 * 60 * 1000); // 5 minutos
+
+		ddm.stopManager();
+
+		_Logger.info("Prueba end-to-end completa. Verificar logs para flujo de datos.");
+	}
+
+	// Helper
+	private void sleep(long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (Exception e) {
+			// Ignorar interrupción
+		}
+	}
+
+
+
 }
