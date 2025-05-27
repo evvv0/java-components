@@ -30,6 +30,25 @@ public class GetActuatorCommandResourceHandler extends CoapResource
 	{
 		super(resourceName);
 		super.setObservable(true);
+
+        new Thread(() -> {
+            try {
+                while (true) {
+                    Thread.sleep(5000); // Espera 5 segundos
+
+                    ActuatorData newData = new ActuatorData();
+                    newData.setCommand(0); // ejemplo
+                    newData.setValue((float)(Math.random() * 100));
+                    newData.setStateData("This is a Test");
+
+                    this.onActuatorDataUpdate(newData);
+                }
+            } catch (Exception e) {
+                _Logger.warning("Thread error: " + e.getMessage());
+            }
+        }).start();
+
+
 	}
 
 	// Constructor that takes a ResourceNameEnum
@@ -106,4 +125,6 @@ public class GetActuatorCommandResourceHandler extends CoapResource
 	public void handleDELETE(CoapExchange context) {
 
 	}
+
+
 }
