@@ -180,7 +180,7 @@ public class DeviceDataManager implements IDataMessageListener
                 _Logger.log(
                     Level.FINE,
                     "Actuator request received: 0. Message: 1",
-                    new Object[] { resourceName.getResourceName(), data.getCommand() });
+                    new Object[] { resourceName.getResourceName(),  Integer.valueOf(data.getCommand()) });
 
                 if (data.hasError()) {
                     _Logger.warning("Error flag set for ActuatorData instance.");
@@ -459,9 +459,9 @@ public class DeviceDataManager implements IDataMessageListener
         // Implementación con MQTT
         if (this.enableMqttClient && this.mqttClient != null) {
             if (this.mqttClient.publishMessage(resourceName, jsonData, qos)) {
-                _Logger.info("Published SensorData to cloud: " + jsonData);
+                _Logger.info("Published SystemPerformanceData to cloud: " + jsonData);
             } else {
-                _Logger.warning("Failed to publish SensorData to cloud: " + jsonData);
+                _Logger.warning("Failed to publish SystemPerformanceData to cloud: " + jsonData);
             }
         }
         if (this.cloudClient != null) {
@@ -509,7 +509,7 @@ public class DeviceDataManager implements IDataMessageListener
             }
     }
 
-        if (this.cloudClient != null) {
+        if (this.enableCloudClient && this.cloudClient != null) {
             this.cloudClient.connectClient();
         }
 
@@ -549,13 +549,13 @@ public class DeviceDataManager implements IDataMessageListener
 		}
             }
 
-        if (this.cloudClient != null) {
+        if (this.enableCloudClient && this.cloudClient != null) {
             this.cloudClient.disconnectClient();
         }
         if (this.enableCoapServer && this.coapServer != null) {
             if (this.coapServer.stopServer()) {
                 _Logger.info("CoAP server stopped.");
-            } else {
+            } else {+
                 _Logger.severe("Failed to stop CoAP server. Check log file for details.");
             }
         }

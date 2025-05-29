@@ -76,7 +76,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
 
 
     public MqttClientConnector() {
-    this(false);
+        this(false);
     }
 
     public MqttClientConnector(boolean useCloudGatewayConfig) {
@@ -92,7 +92,6 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
         } else {
             this.useCloudGatewayConfig = false;
 
-            // Método que ya debes tener implementado para leer configuración
             initClientParameters(ConfigConst.MQTT_GATEWAY_SERVICE);
         }
     }
@@ -174,9 +173,8 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
             return true;
         } catch (Exception e) {
             _Logger.log(Level.SEVERE, "Failed to publish message to topic: " + topicName, e);
+            return false;
         }
-
-        return false;
     }
 
     protected boolean subscribeToTopic(String topicName, int qos) {
@@ -205,9 +203,8 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
             return true;
         } catch (Exception e) {
             _Logger.log(Level.SEVERE, "Failed to subscribe to topic: " + topicName, e);
+            return false;
         }
-
-        return false;
     }
 
     protected boolean unsubscribeFromTopic(String topicName) {
@@ -222,9 +219,8 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
             return true;
         } catch (Exception e) {
             _Logger.log(Level.SEVERE, "Failed to unsubscribe from topic: " + topicName, e);
+            return false;
         }
-
-        return false;
     }
 
     @Override
@@ -262,8 +258,6 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
         return unsubscribeFromTopic(topicName.getResourceName());
     }
 
-
-
 	@Override
     public boolean setConnectionListener(IConnectionListener listener) {
         if (listener != null) {
@@ -273,7 +267,6 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
         } else {
             _Logger.warning("No connection listener specified. Ignoring.");
         }
-
         return false;
     }
 
@@ -285,7 +278,6 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
             _Logger.info("DataMessageListener set successfully.");
             return true;
         }
-
         _Logger.warning("Failed to set DataMessageListener: Listener is null.");
         return false;
     }
@@ -321,12 +313,7 @@ public class MqttClientConnector implements IPubSubClient, MqttCallbackExtended
                     new SystemPerformanceDataMessageListener(ResourceNameEnum.CDA_SYSTEM_PERF_MSG_RESOURCE, this.dataMsgListener));
 
             } else {
-                // Aquí va la suscripción para topics cloud si tienes que hacer algo
-                // Por ejemplo, podrías hacer algo como esto (solo ejemplo):
                 _Logger.info("Using cloud gateway config, subscribing to cloud-specific topics...");
-                // this.subscribeToTopic(ResourceNameEnum.CLOUD_TOPIC_1, qos);
-                // this.subscribeToTopic(ResourceNameEnum.CLOUD_TOPIC_2, qos);
-                // O cualquier lógica que necesites para cloud
             }
         } catch (MqttException e) {
             _Logger.warning("Failed to subscribe to one or more topics: " + e.getMessage());

@@ -108,7 +108,7 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
                     actuatorData.setStateData("LED switching OFF");
                     break;
                 default:
-                    return; // valor no válido, ignorar
+                    return;
             }
 
             if(this.dataMsgListener != null) {
@@ -127,22 +127,20 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
     {
         _Logger.info("Handling CSP subscriptions and device topic provisioning...");
 
-        LedEnablementMessageListener ledListener = new LedEnablementMessageListener(this.dataMsgListener);
-
-        // Crea el topic usando el nombre del dispositivo y variable LED
-        String ledTopic = createTopicName(ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE.getDeviceName(), ConfigConst.LED_ACTUATOR_NAME);
+        LedEnablementMessageListener leml = new LedEnablementMessageListener(this.dataMsgListener);
 
         // Publica un mensaje de respuesta para crear el topic en el cloud (opcional)
         ActuatorData ad = new ActuatorData();
         ad.setAsResponse();
         ad.setName(ConfigConst.LED_ACTUATOR_NAME);
-        ad.setValue((float) -1.0); // valor inválido para inicializar
+        ad.setValue((float) -1.0);
 
+	    String ledTopic = createTopicName(leml.getResource().getDeviceName(), ad.getName());
         String adJson = DataUtil.getInstance().actuatorDataToJson(ad);
         this.publishMessageToCloud(ledTopic, adJson);
 
         // Suscripción al topic con QoS configurado
-        this.mqttClient.subscribeToTopic(ledTopic, this.qosLevel, ledListener);
+        this.mqttClient.subscribeToTopic(ledTopic, this.qosLevel, leml);
     }
 
     @Override
@@ -156,8 +154,8 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
     public boolean connectClient() {
         if (this.mqttClient == null) {
             // TODO: either line should work with recent updates to `MqttClientConnector`
-            // this.mqttClient = new MqttClientConnector(true);
-            this.mqttClient = new MqttClientConnector(ConfigConst.CLOUD_GATEWAY_SERVICE);
+            this.mqttClient = new MqttClientConnector(true);
+            //this.mqttClient = new MqttClientConnector(ConfigConst.CLOUD_GATEWAY_SERVICE);
             this.mqttClient.setConnectionListener(this);
         }
 
@@ -179,11 +177,16 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
     }
 
     @Override
-    public boolean setDataMessageListener(IDataMessageListener listener)
-    {
-        this.dataMsgListener = listener;
-        return (this.dataMsgListener != null);
-    }
+	public boolean setDataMessageListener(IDataMessageListener listener) {
+		if (listener != null) {
+			this.dataMsgListener = listener;
+			if (this.mqttClient != null) {
+				this.mqttClient.setDataMessageListener(listener);
+			}
+			return true;
+		}
+		return false;
+	}
 
 
 	@Override
@@ -220,7 +223,7 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 				_Logger.warning("Failed to send memory utilization data to cloud service.");
 			}
 
-			return cpuSuccess && memSuccess;
+			return (cpuSuccess == memSuccess);
 		}
 		return false;
 	}
@@ -260,38 +263,41 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 	
 	// private methods
 
-	private String createTopicName(ResourceNameEnum resource)
+	private String createTopicName(ResourceNameEnum resource) {
+		return createTopicName(resource.getDeviceName(), resource.getResourceType());
+	}
+
+	private String createTopicName(ResourceNameEnum resource, String itemName)
     {
-        return createTopicName(resource.getDeviceName(), resource.getResourceType());
+        return (createTopicName(resource) + "-" + itemName).toLowerCase();
     }
 
-    private String createTopicName(String deviceName, String resourceTypeName)
-    {
+	private String createTopicName(String deviceName, String resourceTypeName) {
         StringBuilder buf = new StringBuilder();
 
-        if (deviceName != null && !deviceName.trim().isEmpty()) {
+        if (deviceName != null && deviceName.trim().length() > 0) {
             buf.append(topicPrefix).append(deviceName);
         }
 
-        if (resourceTypeName != null && !resourceTypeName.trim().isEmpty()) {
+        if (resourceTypeName != null && resourceTypeName.trim().length() > 0) {
             buf.append('/').append(resourceTypeName);
         }
 
         return buf.toString().toLowerCase();
     }
 
-
     private boolean publishMessageToCloud(ResourceNameEnum resource, String itemName, String payload) {
 		String topicName = createTopicName(resource) + "-" + itemName;
+		_Logger.info("-------------------------------------------------------------------------");
+		_Logger.info(topicName);
+		_Logger.info(payload);
 		return publishMessageToCloud(topicName, payload);
 	}
 
 	private boolean publishMessageToCloud(String topicName, String payload) {
 		try {
 			_Logger.finest("Publishing payload to CSP: " + topicName);
-
 			this.mqttClient.publishMessage(topicName, payload.getBytes(), this.qosLevel);
-
 			return true;
 		} catch (Exception e) {
 			_Logger.warning("Failed to publish message to CSP: " + topicName);
