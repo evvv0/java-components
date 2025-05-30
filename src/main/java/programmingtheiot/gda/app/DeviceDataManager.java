@@ -54,6 +54,7 @@ public class DeviceDataManager implements IDataMessageListener
 		Logger.getLogger(DeviceDataManager.class.getName());
 	
 	// private var's
+	private DataUtil dataUtil = DataUtil.getInstance();
 	
 	private boolean enableMqttClient = true;
 	private boolean enableCoapServer = true;
@@ -179,7 +180,7 @@ public class DeviceDataManager implements IDataMessageListener
             if (data != null) {
                 _Logger.log(
                     Level.FINE,
-                    "Actuator request received: 0. Message: 1",
+                    "Actuator request received: {0}. Message: {1} ",
                     new Object[] { resourceName.getResourceName(),  Integer.valueOf(data.getCommand()) });
 
                 if (data.hasError()) {
@@ -187,8 +188,6 @@ public class DeviceDataManager implements IDataMessageListener
                 }
 
                 int qos = ConfigConst.DEFAULT_QOS;
-
-                // Aquí puedes implementar lógica adicional de análisis si se requiere
 
                 this.sendActuatorCommandtoCda(resourceName, data);
 
@@ -320,12 +319,11 @@ public class DeviceDataManager implements IDataMessageListener
 
             // Si no se ha registrado un dato de humedad anterior
             if (this.latestHumiditySensorData == null) {
-                // Configura el estado inicial
                 this.latestHumiditySensorData = data;
                 this.latestHumiditySensorTimeStamp = getDateTimeFromData(data);
 
                 _Logger.fine("Starting humidity nominal exception timer. Waiting for seconds: " + this.humidityMaxTimePastThreshold);
-                return; // Salir hasta que llegue un nuevo dato
+                return;
             } else {
                 // Si ya hay datos anteriores, calcula la diferencia de tiempo
                 OffsetDateTime curHumiditySensorTimeStamp = getDateTimeFromData(data);
@@ -555,7 +553,7 @@ public class DeviceDataManager implements IDataMessageListener
         if (this.enableCoapServer && this.coapServer != null) {
             if (this.coapServer.stopServer()) {
                 _Logger.info("CoAP server stopped.");
-            } else {+
+            } else {
                 _Logger.severe("Failed to stop CoAP server. Check log file for details.");
             }
         }

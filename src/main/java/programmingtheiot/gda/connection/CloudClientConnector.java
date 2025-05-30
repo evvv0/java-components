@@ -90,6 +90,7 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
         public void messageArrived(String topic, MqttMessage message) throws Exception
         {
             String jsonData = new String(message.getPayload());
+            jsonData = DataUtil.getInstance().cloudPayloadToPayload(jsonData);
             ActuatorData actuatorData = DataUtil.getInstance().jsonToActuatorData(jsonData);
 
             actuatorData.setLocationID(ConfigConst.CONSTRAINED_DEVICE);
@@ -112,10 +113,8 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
             }
 
             if(this.dataMsgListener != null) {
-                // Pasamos el JSON para validación y luego lo procesa DeviceDataManager
-                jsonData = DataUtil.getInstance().actuatorDataToJson(actuatorData);
-                this.dataMsgListener.handleIncomingMessage(
-                    ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE, jsonData);
+				this.dataMsgListener.handleActuatorCommandRequest(
+					ResourceNameEnum.CDA_ACTUATOR_CMD_RESOURCE, actuatorData);
             }
         }
     }
@@ -127,7 +126,7 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
     {
         _Logger.info("Handling CSP subscriptions and device topic provisioning...");
 
-        LedEnablementMessageListener leml = new LedEnablementMessageListener(this.dataMsgListener);
+        LedEnablementMessageListener ledListener = new LedEnablementMessageListener(this.dataMsgListener);
 
         // Publica un mensaje de respuesta para crear el topic en el cloud (opcional)
         ActuatorData ad = new ActuatorData();
@@ -135,12 +134,12 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
         ad.setName(ConfigConst.LED_ACTUATOR_NAME);
         ad.setValue((float) -1.0);
 
-	    String ledTopic = createTopicName(leml.getResource().getDeviceName(), ad.getName());
+	    String ledTopic = createTopicName(ledListener.getResource().getDeviceName(), ad.getName());
         String adJson = DataUtil.getInstance().actuatorDataToJson(ad);
         this.publishMessageToCloud(ledTopic, adJson);
 
         // Suscripción al topic con QoS configurado
-        this.mqttClient.subscribeToTopic(ledTopic, this.qosLevel, leml);
+        this.mqttClient.subscribeToTopic(ledTopic, this.qosLevel, ledListener);
     }
 
     @Override
@@ -297,6 +296,7 @@ public class CloudClientConnector implements ICloudClient, IConnectionListener
 	private boolean publishMessageToCloud(String topicName, String payload) {
 		try {
 			_Logger.finest("Publishing payload to CSP: " + topicName);
+			payload = DataUtil.getInstance().payloadToCloudPayload(payload);
 			this.mqttClient.publishMessage(topicName, payload.getBytes(), this.qosLevel);
 			return true;
 		} catch (Exception e) {
