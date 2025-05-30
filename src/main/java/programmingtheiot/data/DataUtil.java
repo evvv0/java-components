@@ -145,18 +145,7 @@ public class DataUtil
 
 
 	public String payloadToCloudPayload(String payload){
-		// Convert our payload to a format that the cloud can understand
-		// The payload is a JSON string, so we need to parse it
-		// and convert it to the format that the cloud expects
-		// The cloud expects a JSON object with the following format:
-		// {
-		//   "value": <value>,
-		//   "timestamp": <timestamp>,
-		//   "context": {
-		//     <key>: <value>,
-		//     ...
-		//   }
-		// }
+
 		String cloudPayload = null;
 		JSONObject oldPayloadjson = new JSONObject(payload);
 		JSONObject cloudPayloadJson = new JSONObject();
